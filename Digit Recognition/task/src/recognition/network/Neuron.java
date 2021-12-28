@@ -8,7 +8,7 @@ import java.util.stream.DoubleStream;
 public class Neuron implements Serializable {
     private static final long serialVersionUID = 6982537706976038625L;
     private final double[] weights;
-    public double value;
+    private double value;
 
     public Neuron(int inputs) {
         this.weights = initialValues(inputs);
@@ -23,15 +23,11 @@ public class Neuron implements Serializable {
 
     @Override
     public String toString() {
-        return "Neuron output: " + value + " weights:" + Arrays.toString(getWeights());
+        return "Neuron output: " + getValue() + " weights:" + Arrays.toString(weights);
     }
 
     public double getWeight(int index) {
         return weights[index];
-    }
-
-    public double[] getWeights() {
-        return weights;
     }
 
     public void increaseWeight(int index, double delta) {
@@ -40,5 +36,13 @@ public class Neuron implements Serializable {
 
     public int inputCount() {
         return weights.length;
+    }
+
+    public double getValue() {
+        return value;
+    }
+
+    public void setValue(double value) {
+        this.value = value;
     }
 }

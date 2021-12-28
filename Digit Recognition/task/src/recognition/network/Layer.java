@@ -24,7 +24,7 @@ public class Layer implements Serializable {
 
     public void addBias(int outputs) {
         this.bias = new Neuron(outputs);
-        this.bias.value = 1;
+        this.bias.setValue(1);
     }
 
     public Type getType() {
@@ -45,12 +45,12 @@ public class Layer implements Serializable {
 
     public void setNeuronsValues(double[] values) {
         IntStream.range(0, values.length)
-                .forEach(i -> neurons[i].value = values[i]);
+                .forEach(i -> neurons[i].setValue(values[i]));
     }
 
     public double[] getNeuronsValues() {
         return Arrays.stream(neurons)
-                .mapToDouble(n -> n.value)
+                .mapToDouble(Neuron::getValue)
                 .toArray();
     }
 

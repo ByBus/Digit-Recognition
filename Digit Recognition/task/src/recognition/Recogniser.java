@@ -29,7 +29,7 @@ public class Recogniser {
 
     private double calculateValue(Neuron neuron, Layer prevLayer) {
         return IntStream.range(0, prevLayer.getSize())
-                .mapToDouble(i -> prevLayer.getNeuron(i).value * neuron.getWeight(i))
+                .mapToDouble(i -> prevLayer.getNeuron(i).getValue() * neuron.getWeight(i))
                 .sum();
     }
 
@@ -43,7 +43,7 @@ public class Recogniser {
             for (int j = 0; j < currentLayer.getSize(); j++) {
                 Neuron neuron = currentLayer.getNeuron(j);
                 double biasWeight = bias.getWeight(j);
-                neuron.value = sigmoid.applyAsDouble(calculateValue(neuron, previousLayer) + biasWeight);
+                neuron.setValue(sigmoid.applyAsDouble(calculateValue(neuron, previousLayer) + biasWeight));
             }
         }
         return getDigit(network.getOutputLayer().getNeuronsValues());

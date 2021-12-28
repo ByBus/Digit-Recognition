@@ -34,7 +34,7 @@ public class Educator {
 
     private double calculateError(Layer lastLayer, double[] idealOutput) {
         return IntStream.range(0, lastLayer.getSize())
-                .mapToDouble(i -> Math.pow(idealOutput[i] - lastLayer.getNeuron(i).value, 2))
+                .mapToDouble(i -> Math.pow(idealOutput[i] - lastLayer.getNeuron(i).getValue(), 2))
                 .sum();
     }
 
@@ -42,11 +42,11 @@ public class Educator {
         for (int i = 0; i < currentLayer.getSize(); i++) {
             Neuron neuron = currentLayer.getNeuron(i);
             double sum = IntStream.range(0, neuron.inputCount())
-                    .mapToDouble(j -> previousLayer.getNeuron(j).value * neuron.getWeight(j))
+                    .mapToDouble(j -> previousLayer.getNeuron(j).getValue() * neuron.getWeight(j))
                     .sum();
 
             Neuron bias = previousLayer.getBias();
-            neuron.value = sigmoid.applyAsDouble(sum + bias.getWeight(i)); //+ bias.weights[i]
+            neuron.setValue(sigmoid.applyAsDouble(sum + bias.getWeight(i))); //+ bias.weights[i]
         }
     }
 
@@ -69,13 +69,13 @@ public class Educator {
         for (int i = 0; i < nextLayer.getSize(); i++) {
             Neuron neuron = nextLayer.getNeuron(i);
             int k = i;
-            double[] gradients = IntStream.range(0, neuron.getWeights().length)
-                    .mapToDouble(j -> currentLayer.getNeuron(j).value * deltasOfNextLayer[k])
+            double[] gradients = IntStream.range(0, neuron.inputCount())
+                    .mapToDouble(j -> currentLayer.getNeuron(j).getValue() * deltasOfNextLayer[k])
                     .toArray();
             updateNeuronWeights(neuron, gradients);
 
             Neuron bias = currentLayer.getBias();
-            double biasGradient = bias.value * deltasOfNextLayer[i];
+            double biasGradient = bias.getValue() * deltasOfNextLayer[i];
             bias.increaseWeight(i, EDUCATION_FACTOR * biasGradient);
         }
     }
@@ -92,7 +92,7 @@ public class Educator {
             for (int j = 0; j < nextLayer.getSize(); j++) {
                 sum += nextLayer.getNeuron(j).getWeight(i) * deltaNextLayer[j];
             }
-            deltas[i] = sigmoidDerivative.applyAsDouble(currentLayer.getNeuron(i).value) * sum;
+            deltas[i] = sigmoidDerivative.applyAsDouble(currentLayer.getNeuron(i).getValue()) * sum;
         }
         return deltas;
     }
