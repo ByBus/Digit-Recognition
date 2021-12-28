@@ -1,47 +1,59 @@
 package recognition;
 
+import recognition.network.Layer;
+import recognition.network.Network;
+
 import java.io.*;
 
 public class Memory{
-    private static final String SERIALIZATION_FILE_NAME = "G:\\Projects\\Programming\\KotlinIntelliIde\\Digit Recognition\\Neurons.ser";
-    private static final int LAYER_SIZE = 10;
+    private static final String SERIALIZATION_FILE_NAME =
+            "G:\\Projects\\Programming\\KotlinIntelliIde\\Digit Recognition\\Layers.ser";
 
-    private final Neuron[] neurons = new Neuron[LAYER_SIZE];
+    private final Network network;
 
-    public void addNeurons(Neuron[] neuronsToSave) {
-        System.arraycopy(neuronsToSave, 0, neurons, 0, neurons.length);
+    public Memory(Network network) {
+        this.network = network;
     }
 
-    public Neuron[] getReadNeurons() {
+    public void load() {
         try {
-            readFromFile();
-        } catch (IOException ignored) { }
-        return neurons;
-    }
-
-    public Neuron[] getNeurons() {
-        return neurons;
-    }
-
-    public void saveToFile() throws IOException {
-        try (FileOutputStream fileOut = new FileOutputStream(SERIALIZATION_FILE_NAME);
-             ObjectOutputStream oos = new ObjectOutputStream(fileOut)) {
-
-            oos.writeObject(neurons);
+            Layer[] layers = readFromFile();
+            network.setLayers(layers);
+        } catch (IOException ignored) {
+            System.out.println("File not found");
         }
     }
 
-    private void readFromFile() throws IOException {
-        Neuron[] deserialized = null;
+    public void save() {
+        try {
+            saveToFile(network.getLayers());
+        } catch (IOException e) {
+            System.out.println("Can't save the file");
+        }
+    }
+
+    private void saveToFile(Layer[] layers) throws IOException {
+        try (FileOutputStream fileOut = new FileOutputStream(SERIALIZATION_FILE_NAME);
+             ObjectOutputStream oos = new ObjectOutputStream(fileOut)) {
+            oos.writeObject(layers);
+        }
+    }
+
+    private Layer[] readFromFile() throws IOException {
+        Layer[] deserialized = null;
         try (FileInputStream fileIn = new FileInputStream(SERIALIZATION_FILE_NAME);
              ObjectInputStream ois = new ObjectInputStream(fileIn)) {
 
-            deserialized = (Neuron[]) ois.readObject();
+            deserialized = (Layer[]) ois.readObject();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
 
         assert deserialized != null;
-        addNeurons(deserialized);
+        return deserialized;
+    }
+
+    public Network getNetwork() {
+        return network;
     }
 }
