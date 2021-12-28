@@ -1,42 +1,32 @@
 package recognition;
 
 import recognition.education.Educator;
-import recognition.network.Layer;
+import recognition.network.Network;
 import recognition.utils.ReadInput;
 
-import java.io.IOException;
-
 public class Facade {
-    Memory memory;
-    Educator educator;
-    Recogniser recogniser;
+    private final Memory memory;
+    private final Network network;
+    private final Educator educator;
 
-    public Facade(Educator educator) {
+    public Facade(Educator educator, Memory memory, Network network) {
         this.educator = educator;
-        this.memory = educator.getMemory();
-        this.recogniser = new Recogniser(memory);
+        this.memory = memory;
+        this.network = network;
     }
 
-    public void learn() throws IOException {
+    public void train() {
         System.out.println("Learning...");
-        //setTest();
-        educator.learn();
+        educator.train();
         memory.save();
         System.out.println("Done! Saved to the file.");
     }
 
-    private void setTest() {
-        Layer[] layers = memory.getNetwork().getLayers();
-        layers[1].setWeights(0, new double[]{0.45, -0.12});
-        layers[1].setWeights(1, new double[]{0.78, 0.13});
-
-        layers[2].setWeights(0, new double[]{1.5, -2.3});
-    }
-
     public void recognise() {
+        Recogniser recogniser = new Recogniser(network);
         memory.load();
         double[] input = ReadInput.read();
-        int guessedDigit = recogniser.recognize(input);
+        int guessedDigit = recogniser.recognise(input);
         System.out.println("This number is " + guessedDigit);
     }
 }

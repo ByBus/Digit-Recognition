@@ -3,7 +3,7 @@ package recognition.network;
 public class Network {
     private Layer[] layers;
 
-    public void toLayers(int[] layerSizes) {
+    public void initLayers(int[] layerSizes) {
         layers = new Layer[layerSizes.length];
         createLayers(layerSizes);
     }
@@ -25,16 +25,20 @@ public class Network {
         return layers;
     }
 
+    public Layer getLayer(int index) {
+        return layers[index];
+    }
+
     public void setLayers(Layer[] layers) {
         this.layers = layers;
     }
 
-    public int getSize() {
+    public int layerCount() {
         return layers.length;
     }
 
     public Layer getOutputLayer() {
-        return layers[getSize() - 1];
+        return layers[layerCount() - 1];
     }
 
     public Layer getInputLayer() {

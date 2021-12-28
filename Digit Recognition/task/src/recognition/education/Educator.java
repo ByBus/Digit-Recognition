@@ -1,10 +1,8 @@
 package recognition.education;
 
-import recognition.Memory;
 import recognition.network.Layer;
 import recognition.network.Network;
 import recognition.network.Neuron;
-import recognition.utils.Constants;
 
 import java.util.function.DoubleUnaryOperator;
 import java.util.stream.IntStream;
@@ -12,91 +10,89 @@ import java.util.stream.IntStream;
 public class Educator {
     private final DoubleUnaryOperator sigmoid = x -> 1.0 / (1.0 + Math.pow(Math.E, -x));
     private final DoubleUnaryOperator sigmoidDerivative = x -> (1 - x) * x;
-    private final Memory memory;
+    private static final double EDUCATION_FACTOR = 0.5;
+    private static final double EPOCHS = 1000;
 
     private final Network network;
 
-    public Educator(Network network, Memory memory) {
-        this.memory = memory;
+    public Educator(Network network) {
         this.network = network;
     }
 
-    public double checkNetwork(EducationSet education) {
-        Layer[] layers = network.getLayers();
-        for (int i = 0; i < layers.length; i++) {
-            Layer currentLayer = layers[i];
+    private double checkNetwork(EducationSet education) {
+        for (int i = 0; i < network.layerCount(); i++) {
+            Layer currentLayer = network.getLayer(i);
             if (currentLayer.getType() == Layer.Type.INPUT) {
                 currentLayer.setNeuronsValues(education.getInput());
             } else {
-                Layer previousLayer = layers[i - 1];
+                Layer previousLayer = network.getLayer(i - 1);
                 calculateOutput(currentLayer, previousLayer);
             }
         }
         return calculateError(network.getOutputLayer(), education.getOutput());
     }
 
-    private double calculateError(Layer layer, double[] idealOutput) {
-        return IntStream.range(0, layer.getSize())
-                .mapToDouble(i -> Math.pow(idealOutput[i] - layer.get(i).value, 2))
+    private double calculateError(Layer lastLayer, double[] idealOutput) {
+        return IntStream.range(0, lastLayer.getSize())
+                .mapToDouble(i -> Math.pow(idealOutput[i] - lastLayer.getNeuron(i).value, 2))
                 .sum();
     }
 
     private void calculateOutput(Layer currentLayer, Layer previousLayer) {
         for (int i = 0; i < currentLayer.getSize(); i++) {
-            Neuron neuron = currentLayer.get(i);
-            double[] weights = neuron.weights;
-            double sum = IntStream.range(0, weights.length)
-                    .mapToDouble(j -> previousLayer.get(j).value * weights[j])
+            Neuron neuron = currentLayer.getNeuron(i);
+            double sum = IntStream.range(0, neuron.inputCount())
+                    .mapToDouble(j -> previousLayer.getNeuron(j).value * neuron.getWeight(j))
                     .sum();
 
             Neuron bias = previousLayer.getBias();
-            neuron.value = sigmoid.applyAsDouble(sum); //+ bias.weights[i]
+            neuron.value = sigmoid.applyAsDouble(sum + bias.getWeight(i)); //+ bias.weights[i]
         }
     }
 
     private void backPropagation(EducationSet education) {
-        Layer[] layers = network.getLayers();
         double[] deltas = new double[0];
-        for (int i = layers.length - 1; i >= 0; i--) {
-            Layer layer = layers[i];
+        for (int i = network.layerCount() - 1; i >= 0; i--) {
+            Layer layer = network.getLayer(i);
             if (layer.getType() == Layer.Type.OUTPUT) {
                 double[] idealOutput = education.getOutput();
                 deltas = calculateDelta(idealOutput, layer.getNeuronsValues());
             } else {
-                updateWeights(layer, layers[i + 1], deltas);
-                deltas = calculateDelta(layer, layers[i + 1], deltas);
+                Layer nextLayer = network.getLayer(i + 1);
+                updateWeights(layer, nextLayer, deltas);
+                deltas = calculateDelta(layer, nextLayer, deltas);
             }
         }
     }
 
     private void updateWeights(Layer currentLayer, Layer nextLayer, double[] deltasOfNextLayer) {
-        double[] valuesOfCurrentLayer = currentLayer.getNeuronsValues();
         for (int i = 0; i < nextLayer.getSize(); i++) {
-            Neuron neuron = nextLayer.getNeurons()[i];
+            Neuron neuron = nextLayer.getNeuron(i);
             int k = i;
-            double[] gradient = IntStream.range(0, neuron.weights.length)
-                    .mapToDouble(j -> valuesOfCurrentLayer[j] * deltasOfNextLayer[k])
+            double[] gradients = IntStream.range(0, neuron.getWeights().length)
+                    .mapToDouble(j -> currentLayer.getNeuron(j).value * deltasOfNextLayer[k])
                     .toArray();
-            updateNeuronWeights(neuron, gradient);
+            updateNeuronWeights(neuron, gradients);
+
+            Neuron bias = currentLayer.getBias();
+            double biasGradient = bias.value * deltasOfNextLayer[i];
+            bias.increaseWeight(i, EDUCATION_FACTOR * biasGradient);
         }
     }
 
     private void updateNeuronWeights(Neuron neuron, double[] gradient) {
-        double[] weights = neuron.weights;
-        IntStream.range(0, weights.length)
-                .forEach(i -> weights[i] += 0.5 * gradient[i]);
+        IntStream.range(0, neuron.inputCount())
+                .forEach(i -> neuron.increaseWeight(i, EDUCATION_FACTOR * gradient[i]));
     }
 
     private double[] calculateDelta(Layer currentLayer, Layer nextLayer, double[] deltaNextLayer) {
-        double[] currentLayerValues = currentLayer.getNeuronsValues();
-        double[] deltas = new double[currentLayerValues.length];
-        for (int i = 0; i < currentLayerValues.length; i++) {
+        double[] deltas = new double[currentLayer.getSize()];
+        for (int i = 0; i < currentLayer.getSize(); i++) {
             double sum = 0;
-            Neuron[] neurons = nextLayer.getNeurons();
-            for (int j = 0; j < neurons.length; j++) {
-                sum += neurons[j].weights[i] * deltaNextLayer[j];
+            for (int j = 0; j < nextLayer.getSize(); j++) {
+                sum += nextLayer.getNeuron(j).getWeight(i) * deltaNextLayer[j];
             }
-            deltas[i] = sigmoidDerivative.applyAsDouble(currentLayerValues[i]) * sum;
+            deltas[i] = sigmoidDerivative.applyAsDouble(currentLayer.getNeuron(i).value) * sum;
         }
         return deltas;
     }
@@ -108,9 +104,9 @@ public class Educator {
                 .toArray();
     }
 
-    public void learn() {
-        EducationSet[] educationSets = Constants.getEducationalSets();
-        for (int epoch = 0; epoch < 1000; epoch++) {
+    public void train() {
+        EducationSet[] educationSets = TrainData.getEducationalSets();
+        for (int epoch = 0; epoch < EPOCHS; epoch++) {
             double mse = 0;
             for (var education : educationSets) {
                 mse += checkNetwork(education);
@@ -118,9 +114,5 @@ public class Educator {
             }
             System.out.println("MSE: " + mse / educationSets.length);
         }
-    }
-
-    public Memory getMemory() {
-        return memory;
     }
 }

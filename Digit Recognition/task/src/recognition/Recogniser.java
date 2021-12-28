@@ -10,11 +10,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Recogniser {
-    private final Memory memory;
+    private final Network network;
     private final DoubleUnaryOperator sigmoid = x -> 1.0 / (1.0 + Math.pow(Math.E, -x));
 
-    public Recogniser(Memory memory) {
-        this.memory = memory;
+    public Recogniser(Network network) {
+        this.network = network;
     }
 
     private int getDigit(double[] outputLayer) {
@@ -27,20 +27,23 @@ public class Recogniser {
                 .indexOf(max);
     }
 
-    private double calculateValue(Neuron neuron, double[] layerValues) {
-        return IntStream.range(0, layerValues.length)
-                .mapToDouble(i -> layerValues[i] * neuron.weights[i])
+    private double calculateValue(Neuron neuron, Layer prevLayer) {
+        return IntStream.range(0, prevLayer.getSize())
+                .mapToDouble(i -> prevLayer.getNeuron(i).value * neuron.getWeight(i))
                 .sum();
     }
 
-    public int recognize(double[] inputValues) {
-        Network network = memory.getNetwork();
-        Layer[] layers = network.getLayers();
+    public int recognise(double[] inputValues) {
         network.getInputLayer().setNeuronsValues(inputValues);
-        for (int i = 1; i < layers.length; i++) {
-            double[] previousValues = layers[i - 1].getNeuronsValues();
-            for (Neuron neuron : layers[i].getNeurons()) {
-                neuron.value = sigmoid.applyAsDouble(calculateValue(neuron, previousValues));
+        for (int i = 1; i < network.layerCount(); i++) {
+            Layer currentLayer = network.getLayer(i);
+            Layer previousLayer = network.getLayer(i - 1);
+            Neuron bias = previousLayer.getBias();
+
+            for (int j = 0; j < currentLayer.getSize(); j++) {
+                Neuron neuron = currentLayer.getNeuron(j);
+                double biasWeight = bias.getWeight(j);
+                neuron.value = sigmoid.applyAsDouble(calculateValue(neuron, previousLayer) + biasWeight);
             }
         }
         return getDigit(network.getOutputLayer().getNeuronsValues());

@@ -27,10 +27,6 @@ public class Layer implements Serializable {
         this.bias.value = 1;
     }
 
-    public void setNeuronValue(int neuronNumber, double value) {
-        neurons[neuronNumber].value = value;
-    }
-
     public Type getType() {
         return type;
     }
@@ -45,10 +41,6 @@ public class Layer implements Serializable {
 
     public int getSize() {
         return neurons.length;
-    }
-
-    public Neuron[] getNeurons() {
-        return neurons;
     }
 
     public void setNeuronsValues(double[] values) {
@@ -67,11 +59,7 @@ public class Layer implements Serializable {
         return Arrays.toString(neurons);
     }
 
-    public void setWeights(int neuronNumber, double[] weights) {
-        System.arraycopy(weights, 0, neurons[neuronNumber].weights, 0, weights.length);
-    }
-
-    public Neuron get(int index) {
+    public Neuron getNeuron(int index) {
         return neurons[index];
     }
 }

@@ -7,12 +7,11 @@ import java.util.stream.DoubleStream;
 
 public class Neuron implements Serializable {
     private static final long serialVersionUID = 6982537706976038625L;
-    public double[] weights;
-    public int number;
+    private final double[] weights;
     public double value;
 
     public Neuron(int inputs) {
-        weights = initialValues(inputs);
+        this.weights = initialValues(inputs);
     }
 
     private double[] initialValues(int connections) {
@@ -24,6 +23,22 @@ public class Neuron implements Serializable {
 
     @Override
     public String toString() {
-        return "Neuron output: " + value + " weights:" + Arrays.toString(weights);
+        return "Neuron output: " + value + " weights:" + Arrays.toString(getWeights());
+    }
+
+    public double getWeight(int index) {
+        return weights[index];
+    }
+
+    public double[] getWeights() {
+        return weights;
+    }
+
+    public void increaseWeight(int index, double delta) {
+        weights[index] += delta;
+    }
+
+    public int inputCount() {
+        return weights.length;
     }
 }

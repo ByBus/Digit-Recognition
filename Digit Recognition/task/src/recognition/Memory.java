@@ -52,8 +52,4 @@ public class Memory{
         assert deserialized != null;
         return deserialized;
     }
-
-    public Network getNetwork() {
-        return network;
-    }
 }

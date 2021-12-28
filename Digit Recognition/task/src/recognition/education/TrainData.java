@@ -1,10 +1,8 @@
-package recognition.utils;
-
-import recognition.education.EducationSet;
+package recognition.education;
 
 import java.util.stream.IntStream;
 
-public class Constants {
+public class TrainData {
     private static final double B = 1;
     private static final double W = 0;
 
