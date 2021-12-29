@@ -1,17 +1,13 @@
 package recognition;
 
-import recognition.network.Layer;
+import recognition.education.Educator;
 import recognition.network.Network;
-import recognition.network.Neuron;
 
 import java.util.Arrays;
-import java.util.function.DoubleUnaryOperator;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class Recogniser {
     private final Network network;
-    private final DoubleUnaryOperator sigmoid = x -> 1.0 / (1.0 + Math.pow(Math.E, -x));
 
     public Recogniser(Network network) {
         this.network = network;
@@ -27,25 +23,10 @@ public class Recogniser {
                 .indexOf(max);
     }
 
-    private double calculateValue(Neuron neuron, Layer prevLayer) {
-        return IntStream.range(0, prevLayer.getSize())
-                .mapToDouble(i -> prevLayer.getNeuron(i).getValue() * neuron.getWeight(i))
-                .sum();
-    }
-
     public int recognise(double[] inputValues) {
-        network.getInputLayer().setNeuronsValues(inputValues);
-        for (int i = 1; i < network.layerCount(); i++) {
-            Layer currentLayer = network.getLayer(i);
-            Layer previousLayer = network.getLayer(i - 1);
-            Neuron bias = previousLayer.getBias();
+        Educator educator = new Educator(network);
+        educator.calculateNetworkValues(inputValues);
 
-            for (int j = 0; j < currentLayer.getSize(); j++) {
-                Neuron neuron = currentLayer.getNeuron(j);
-                double biasWeight = bias.getWeight(j);
-                neuron.setValue(sigmoid.applyAsDouble(calculateValue(neuron, previousLayer) + biasWeight));
-            }
-        }
         return getDigit(network.getOutputLayer().getNeuronsValues());
     }
 }

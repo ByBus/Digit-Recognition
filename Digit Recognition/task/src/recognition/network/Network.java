@@ -10,7 +10,7 @@ public class Network {
 
     public void createLayers(int[] layerSizes) {
         for (int i = 0; i < layerSizes.length; i++) {
-            int previousLayerSize = i != 0 ? layerSizes[i - 1] : 1;
+            int previousLayerSize = i != 0 ? layerSizes[i - 1] : 0;
             layers[i] = new Layer(layerSizes[i], previousLayerSize);
             if (i > 0) {
                 // add bias to previous layer with connections to current
@@ -39,9 +39,5 @@ public class Network {
 
     public Layer getOutputLayer() {
         return layers[layerCount() - 1];
-    }
-
-    public Layer getInputLayer() {
-        return layers[0];
     }
 }

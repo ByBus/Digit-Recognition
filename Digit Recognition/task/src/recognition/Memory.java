@@ -19,7 +19,7 @@ public class Memory{
         try {
             Layer[] layers = readFromFile();
             network.setLayers(layers);
-        } catch (IOException ignored) {
+        } catch (IOException e) {
             System.out.println("File not found");
         }
     }

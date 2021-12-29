@@ -11,10 +11,10 @@ public class Neuron implements Serializable {
     private double value;
 
     public Neuron(int inputs) {
-        this.weights = initialValues(inputs);
+        this.weights = inputs > 0 ? generateWeights(inputs) : null;
     }
 
-    private double[] initialValues(int connections) {
+    private double[] generateWeights(int connections) {
         Random rand = new Random();
         return DoubleStream.generate(rand::nextGaussian)
                 .limit(connections)
@@ -23,7 +23,7 @@ public class Neuron implements Serializable {
 
     @Override
     public String toString() {
-        return "Neuron output: " + getValue() + " weights:" + Arrays.toString(weights);
+        return "Neuron output: " + value + " weights:" + Arrays.toString(weights);
     }
 
     public double getWeight(int index) {
@@ -34,7 +34,7 @@ public class Neuron implements Serializable {
         weights[index] += delta;
     }
 
-    public int inputCount() {
+    public int inputsCount() {
         return weights.length;
     }
 
