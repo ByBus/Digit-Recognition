@@ -1,17 +1,22 @@
 package recognition.education;
 
+import recognition.Recogniser;
 import recognition.network.Layer;
 import recognition.network.Network;
 import recognition.network.Neuron;
 
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.function.DoubleUnaryOperator;
 import java.util.stream.IntStream;
 
 public class Educator {
+    private static final double EPOCHS = 10;
+    private static final double LEARNING_RATE = 0.7;
     private final DoubleUnaryOperator sigmoid = x -> 1.0 / (1.0 + Math.pow(Math.E, -x));
     private final DoubleUnaryOperator sigmoidDerivative = x -> (1 - x) * x;
-    private static final double LEARNING_RATE = 0.5;
-    private static final double EPOCHS = 1000;
 
     private final Network network;
 
@@ -62,11 +67,11 @@ public class Educator {
             Layer layer = network.getLayer(i);
             if (layer.getType() == Layer.Type.OUTPUT) {
                 double[] idealOutput = education.getOutput();
-                deltas = calculateDelta(idealOutput, layer.getNeuronsValues());
+                deltas = calculateDeltas(idealOutput, layer.getNeuronsValues());
             } else {
                 Layer nextLayer = network.getLayer(i + 1);
                 updateWeights(layer, nextLayer, deltas);
-                deltas = calculateDelta(layer, nextLayer, deltas);
+                deltas = calculateDeltas(layer, nextLayer, deltas);
             }
         }
     }
@@ -89,12 +94,12 @@ public class Educator {
                 .toArray();
     }
 
-    private void updateNeuronWeights(Neuron neuron, double[] gradient) {
+    private void updateNeuronWeights(Neuron neuron, double[] gradients) {
         IntStream.range(0, neuron.inputsCount())
-                .forEach(i -> neuron.increaseWeight(i, LEARNING_RATE * gradient[i]));
+                .forEach(i -> neuron.increaseWeight(i, LEARNING_RATE * gradients[i]));
     }
 
-    private double[] calculateDelta(Layer currentLayer, Layer nextLayer, double[] deltaNextLayer) {
+    private double[] calculateDeltas(Layer currentLayer, Layer nextLayer, double[] deltaNextLayer) {
         double[] deltas = new double[currentLayer.getSize()];
         for (int i = 0; i < currentLayer.getSize(); i++) {
             int k = i;
@@ -106,7 +111,7 @@ public class Educator {
         return deltas;
     }
 
-    private double[] calculateDelta(double[] idealOutput, double[] actualOutput) {
+    private double[] calculateDeltas(double[] idealOutput, double[] actualOutput) {
         return IntStream.range(0, idealOutput.length)
                 .mapToDouble(i -> (idealOutput[i] - actualOutput[i])
                         * sigmoidDerivative.applyAsDouble(actualOutput[i]))
@@ -114,20 +119,48 @@ public class Educator {
     }
 
     public void train() {
-        EducationSet[] educationSets = TrainData.getEducationalSets();
-        for (int epoch = 0; epoch < EPOCHS; epoch++) {
-            double mse = 0; // Mean squared error
-            for (var education : educationSets) {
-                updateNetwork(education);
-                mse += calculateError(education);
-                backPropagation(education);
+        try {
+            EducationSet[] educationSets = TrainData.getEducationalSets();
+
+            long start = System.currentTimeMillis();
+            Timestamp timestamp = new Timestamp(start);
+            System.out.println("Education start: " + timestamp);
+
+            for (int epoch = 0; epoch < EPOCHS; epoch++) {
+                for (var batch = 0; batch < 70; batch++) {
+                    double mse = 0; // Mean squared error
+                    for (var k = 0; k < 1000; k++) {
+                        var education = educationSets[batch * 1000 + k];
+                        updateNetwork(education);
+                        mse += calculateError(education);
+                        backPropagation(education);
+                    }
+                    System.out.println("MSE: " + mse / 1000);
+                }
             }
-            System.out.println("MSE: " + mse / educationSets.length);
+
+            Duration duration = Duration.ofMillis(System.currentTimeMillis() - start);
+            System.out.printf("Duration: %02d:%02d:%02d%n",
+                    duration.toHours(),
+                    duration.toMinutesPart(),
+                    duration.toSecondsPart());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     public void calculateNetworkValues(double[] inputValues) {
         EducationSet input = new EducationSet(inputValues, new double[0]);
         updateNetwork(input);
+    }
+
+    public int[] calculateAccuracy() throws IOException {
+        EducationSet[] educationalSets = TrainData.getEducationalSets();
+        Recogniser recogniser = new Recogniser(network);
+        int counter = (int) Arrays.stream(educationalSets)
+                .filter(education ->
+                        recogniser.recognise(education) == education.getValue())
+                .count();
+        return new int[]{counter, educationalSets.length};
     }
 }

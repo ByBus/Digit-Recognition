@@ -14,19 +14,26 @@ public class Main {
         Facade facade = new Facade(educator, memory, network);
         int choice = menu();
         System.out.println("Your choice: " + choice);
-        if (choice == 1) {
-            int[] layersSizes = getLayerSizes();
-            network.initLayers(layersSizes);
-            facade.train();
-        } else {
-            facade.recognise();
+        switch (choice) {
+            case 1:
+                int[] layersSizes = getLayerSizes();
+                network.initLayers(layersSizes);
+                facade.train();
+                break;
+            case 2:
+                facade.getNetworkPrediction();
+                break;
+            case 3:
+                facade.recognise(getInputFileName());
+                break;
         }
     }
 
     private static int menu() {
         Scanner sc = new Scanner(System.in);
         System.out.println("1. Learn the network");
-        System.out.println("2. Guess a number");
+        System.out.println("2. Guess all the numbers");
+        System.out.println("3. Guess number from text file");
         return sc.nextInt();
     }
 
@@ -36,5 +43,11 @@ public class Main {
         return Arrays.stream(sc.nextLine().trim().split("\\s+"))
                 .mapToInt(Integer::parseInt)
                 .toArray();
+    }
+
+    private static String getInputFileName() {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter filename: ");
+        return sc.nextLine();
     }
 }

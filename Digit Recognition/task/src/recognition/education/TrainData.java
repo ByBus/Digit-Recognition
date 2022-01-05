@@ -1,60 +1,56 @@
 package recognition.education;
 
+import recognition.utils.ReadInput;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
 public class TrainData {
-    private static final double B = 1;
-    private static final double W = 0;
+    private static final String DATA_DIR = "G:\\Projects\\Programming\\KotlinIntelliIde\\Digit Recognition\\data";
+    private static final int MAX_SETS = 70000;
 
-    private static final double[][] IDEAL_INPUTS = {
-            {W, B, W, W, B, W, B, B, W, B, B, W, W, B, B},
-            {B, B, W, W, W, B, W, W, B, B, W, W, B, B, B},
-            {B, B, B, B, W, B, W, W, B, W, W, B, W, W, B},
-            {B, B, B, B, W, B, B, B, B, W, W, B, W, B, B},
-            {B, B, B, B, W, B, B, W, B, B, W, B, W, B, B},
-            {B, B, B, W, W, B, B, B, B, W, W, B, W, B, B},
-            {B, W, B, W, W, B, B, B, B, W, W, B, W, W, B},
-            {B, B, B, B, W, W, B, B, B, W, W, B, B, B, W},
-            {B, B, B, B, W, B, B, B, B, B, W, B, B, B, W},
-            {W, B, B, B, W, W, B, B, B, B, W, B, B, B, B},
-            {B, B, B, B, W, B, B, W, B, B, W, B, B, B, B},
-            {W, B, W, W, B, W, W, B, W, W, B, W, W, B, W},
-            {B, B, B, W, W, B, B, B, B, B, W, W, B, B, B},
-            {B, B, B, W, W, B, B, B, B, W, W, B, B, B, B},
-            {B, W, B, B, W, B, B, B, B, W, W, B, W, W, B},
-            {B, B, B, B, W, W, B, B, B, W, W, B, B, B, B},
-            {B, B, B, B, W, W, B, B, B, B, W, B, B, B, B},
-            {B, B, B, W, W, B, W, W, B, W, W, B, W, W, B},
-            {B, B, B, B, W, B, B, B, B, B, W, B, B, B, B},
-            {B, B, B, B, W, B, B, B, B, W, W, B, B, B, B},
-    };
+    public static EducationSet[] getEducationalSets() throws IOException {
+        EducationSet[] educationSets = new EducationSet[MAX_SETS];
+        var randomIndices = getRandomIndices();
+        for (int i = 0; i < MAX_SETS; i++) {
+            String filename = addLeadingZeroes(i + 1);
+            String filePath = DATA_DIR + File.separator + filename;
+            File educationalFile = new File(filePath);
+            educationSets[randomIndices.get(i)] = dataToEducationalSets(ReadInput.readDataFromFile(educationalFile));
+        }
+        return educationSets;
+    }
 
-    private static final double[][] IDEAL_OUTPUTS = {
-            {0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-            {0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    };
+    private static List<Integer> getRandomIndices() {
+        List<Integer> integers =
+                IntStream.range(0, MAX_SETS)
+                        .boxed()
+                        .collect(Collectors.toList());
 
-    public static EducationSet[] getEducationalSets() {
-        return IntStream.range(0, IDEAL_INPUTS.length)
-                .mapToObj(i -> new EducationSet(IDEAL_INPUTS[i], IDEAL_OUTPUTS[i]))
-                .toArray(EducationSet[]::new);
+        Collections.shuffle(integers);
+        return integers;
+    }
+
+    private static String addLeadingZeroes(int i) {
+        return String.format("%05d.txt", i);
+    }
+
+    private static EducationSet dataToEducationalSets(double[] data) {
+        double[] input = Arrays.stream(data, 0, data.length - 1)
+                .map(num -> num / 255)
+                .toArray();
+        double[] output = DoubleStream
+                .generate(() -> 0.0)
+                .limit(10)
+                .toArray();
+        int outputDigitValue = (int) data[data.length - 1];
+        output[outputDigitValue] = 1;
+        return new EducationSet(input, output);
     }
 }

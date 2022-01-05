@@ -1,5 +1,8 @@
 package recognition.network;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 public class Network {
     private Layer[] layers;
 
@@ -39,5 +42,13 @@ public class Network {
 
     public Layer getOutputLayer() {
         return layers[layerCount() - 1];
+    }
+
+    @Override
+    public String toString() {
+        return "Layers: " + Arrays.stream(layers)
+                .mapToInt(Layer::getSize)
+                .boxed()
+                .collect(Collectors.toList());
     }
 }
