@@ -6,8 +6,7 @@ import recognition.network.Network;
 import java.io.*;
 
 public class Memory{
-    private static final String SERIALIZATION_FILE_NAME =
-            "G:\\Projects\\Programming\\KotlinIntelliIde\\Digit Recognition\\Layers.ser";
+    private static final String SERIALIZATION_FILE_NAME = "Layers.ser";
 
     private final Network network;
 

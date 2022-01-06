@@ -12,7 +12,7 @@ import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
 public class TrainData {
-    private static final String DATA_DIR = "G:\\Projects\\Programming\\KotlinIntelliIde\\Digit Recognition\\data";
+    private static final String DATA_DIR = "data";
     private static final int MAX_SETS = 70000;
 
     public static EducationSet[] getEducationalSets() throws IOException {
